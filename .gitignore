@@ -16,3 +16,6 @@ stocks.json
 stocks_messages.json
 leaderboard_messages.json
 *.json
+
+#ignore venv
+venv/

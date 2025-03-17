@@ -1,10 +1,10 @@
-# CH3F Exchange Discord Bot
+# Discord Exchange Bot
 
-A Discord bot for the CH3F Clan Stock Exchange simulation, allowing users to earn virtual currency, trade stocks, and interact with various fun commands.
+A Discord bot that simulates a local Stock Exchange, allowing users to earn virtual currency, trade eachothers stocks, and promotes interaction with the discord.
 
 ## Features
 
-- Virtual currency system ($CCD)
+- Virtual currency system 
 - Stock market simulation with real-time price updates
 - Interactive commands with button-based UI
 - Daily rewards and message/reaction based earnings
@@ -44,10 +44,10 @@ The bot is organized into modular components:
 ## Commands
 
 ### Economy Commands
-- `!balance` - Check your $CCD balance
+- `!balance` - Check your balance
 - `!daily` - Claim daily reward
-- `!gift <@user> <amount>` - Gift $CCD to another user
-- `!leaderboard` - Show top $CCD holders
+- `!gift <@user> <amount>` - Gift to another user
+- `!leaderboard` - Show top holders
 
 ### Stock Market Commands
 - `!stocks` - Show most valuable stocks

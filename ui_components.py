@@ -1,5 +1,5 @@
 """
-UI components module for Exchange Discord Bot
+UI components module for Stock Exchange Discord Bot
 Contains all Discord UI components like buttons, views, etc.
 """
 import logging
@@ -47,26 +47,13 @@ class ChartView(View):
         )
         embed.set_image(url="attachment://chart.png")
         
-        # Add market condition footer
-        market_emoji = {
-            "bull": "📈",
-            "bear": "📉",
-            "volatile": "⚠️",
-            "stable": "🔄"
-        }.get(StockManager.market_condition, "🔄")
-        
         if len(price_history) > 1:
             # Add price info and market info to footer
             start_price = price_history[0]
             overall_change = ((price - start_price) / start_price) * 100
             
             embed.set_footer(
-                text=f"Starting: ${start_price:.2f} | Overall: {overall_change:.1f}% | "
-                f"Market: {market_emoji} {StockManager.market_condition.upper()}"
-            )
-        else:
-            embed.set_footer(
-                text=f"Market: {market_emoji} {StockManager.market_condition.upper()}"
+                text=f"Starting: ${start_price:.2f} | Overall: {overall_change:.1f}%"
             )
         
         return file, embed

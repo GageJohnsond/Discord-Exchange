@@ -1,12 +1,12 @@
 """
-Stock market simulation module for a Discord Bot
+Stock market simulation module for Discord Exchange Bot
 Handles stock data, market conditions, and price updates
 """
 import json
 import random
 import logging
 import pytz
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Tuple, Optional, Union
 from io import BytesIO
 
@@ -127,7 +127,9 @@ class StockManager:
         cls.market_condition = "stable"
         cls.current_min_change = config.STOCK_PRICE_MIN_CHANGE
         cls.current_max_change = config.STOCK_PRICE_MAX_CHANGE
-        cls.last_condition_change = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        
+        # Set initial condition change time using full timestamp
+        cls.last_condition_change = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
         
         # Save the new data
         cls.save_stocks()
@@ -163,25 +165,42 @@ class StockManager:
     @classmethod
     def check_market_condition(cls) -> None:
         """
-        Check and potentially update market condition based on daily schedule.
+        Check and potentially update market condition based on 6-hour schedule.
         """
-        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        now = datetime.now(timezone.utc)
+        current_time = now.strftime("%Y-%m-%d %H:%M:%S")
         
-        # Skip if already updated today
-        if cls.last_condition_change == today:
-            return
+        # Format last condition change time if it exists
+        if cls.last_condition_change:
+            try:
+                # Try to parse the stored datetime string
+                last_change_time = datetime.strptime(cls.last_condition_change, "%Y-%m-%d %H:%M:%S")
+                # Add timezone info
+                last_change_time = last_change_time.replace(tzinfo=timezone.utc)
+                
+                # Check if 6 hours have passed
+                time_diff = now - last_change_time
+                hours_passed = time_diff.total_seconds() / 3600
+                
+                # If less than 6 hours have passed, don't update
+                if hours_passed < 9:
+                    return
+                    
+            except ValueError:
+                # If there's an error parsing the date, force an update
+                logger.warning("Could not parse last condition change time. Forcing market update.")
         
         # Define possible market conditions with their properties
         conditions = [
             {
                 "name": "bear", 
-                "weight": 0.25,
-                "min_change": random.uniform(-5, -2),
+                "weight": 0.2,
+                "min_change": random.uniform(-5, -1),
                 "max_change": random.uniform(-1, 2),
             },
             {
                 "name": "bull", 
-                "weight": 0.25,
+                "weight": 0.2,
                 "min_change": random.uniform(-1, 1),
                 "max_change": random.uniform(2, 5),
             },
@@ -193,7 +212,7 @@ class StockManager:
             },
             {
                 "name": "stable", 
-                "weight": 0.3,
+                "weight": 0.4,
                 "min_change": random.uniform(-3, -1),
                 "max_change": random.uniform(1, 3),
             }
@@ -207,7 +226,7 @@ class StockManager:
         cls.market_condition = new_condition["name"]
         cls.current_min_change = new_condition["min_change"]
         cls.current_max_change = new_condition["max_change"]
-        cls.last_condition_change = today
+        cls.last_condition_change = current_time
         
         # Save the changes
         cls.save_stocks()
@@ -237,9 +256,9 @@ class StockManager:
             cls.stock_prices[symbol] = round(new_price, 2)
             cls.price_history[symbol].append(round(new_price, 2))
             
-            # Keep history at a reasonable size (last 100 updates)
-            if len(cls.price_history[symbol]) > 100:
-                cls.price_history[symbol] = cls.price_history[symbol][-100:]
+            # Keep history at last 125 updates
+            if len(cls.price_history[symbol]) > 125:
+                cls.price_history[symbol] = cls.price_history[symbol][-125:]
         
         # Save the updated stock data
         cls.save_stocks()
@@ -447,7 +466,7 @@ class StockManager:
         else:
             color = 'blue'
             
-        ax.plot(x_values, history, marker='o', color=color, linestyle='-')
+        ax.plot(x_values, history, color=color, linestyle='-')
         
         # Add labels and grid
         ax.set_xlabel("Time Steps")

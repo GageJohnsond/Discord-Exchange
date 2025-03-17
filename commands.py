@@ -171,13 +171,13 @@ def about(ctx):
     """Display information about the bot"""
     embed = discord.Embed(
         title="About The Stock Exchange",
-        description="This is a bot built to simulate the a discord stock exchange. Made by Gage Johnson.",
+        description="This is a bot built to simulate this Discords stock Exchange.",
         color=config.COLOR_DISCORD
     )
     
     embed.add_field(
         name="Creator",
-        value="Created by Gage"
+        value="Created by Gage Johnson."
     )
     
     embed.add_field(
@@ -259,16 +259,11 @@ async def process_command(bot, message):
         elif command == 'help':
             return help(ctx)
         
-        else:
-            return f"⚠️ {message.author.mention}, invalid command. See !help"
-
-        
-        # Unknown command
-        return False
-    
     except Exception as e:
         logger.error(f"Error processing command {command}: {e}", exc_info=True)
         return f"An error occurred: {str(e)}"
+    
+    return False
 
 def setup(bot):
     """Setup commands"""
