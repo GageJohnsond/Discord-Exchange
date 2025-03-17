@@ -39,7 +39,7 @@ LOGO_FILE = "logo.png"
 # Stock configuration
 STOCK_SYMBOLS = [
     "$BBST", "$PETE", "$SWAG", "$GAGE", "$HNME", "$WREX", "$LAND", 
-    "$BRAN", "$KYLE", "$HAKM", "$SAM", "$NUTB", "$MJRK"
+    "$BRAN", "$KYLE", "$HAKM", "$SAM", #"$NUTB", "$MJRK"
 ]
 
 # Mapping of user IDs to their ticker symbols
@@ -49,7 +49,7 @@ USER_TO_TICKER = {
     "203284441122996224": "$WREX", "690423460027039755": "$LAND",
     "490011081251487766": "$BRAN", "205044983382802432": "$KYLE",
     "126535729156194304": "$GAGE", "127566924992217089": "$SAM",
-    "380842798359904267": "$NUTB", "185924063464521730": "$MJRK"
+    #"380842798359904267": "$NUTB", "185924063464521730": "$MJRK"
 }
 
 # Update settings
