@@ -165,7 +165,7 @@ class StockManager:
     @classmethod
     def check_market_condition(cls) -> None:
         """
-        Check and potentially update market condition based on 6-hour schedule.
+        Check and potentially update market condition based on 9-hour schedule.
         """
         now = datetime.now(timezone.utc)
         current_time = now.strftime("%Y-%m-%d %H:%M:%S")
