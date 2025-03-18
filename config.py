@@ -15,6 +15,7 @@ TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 ACTIVE_CHANNEL_IDS = [1276652104253051005, 1347853900799152211, 1288198542741213224, 1288198542741213224]
 STOCK_CHANNEL_ID = 1347853926044799008
 LEADERBOARD_CHANNEL_ID = 1347853992008351764
+TERMINAL_CHANNEL_ID = 1347853900799152211
 
 # Economy settings
 DAILY_CAP = 60
@@ -37,6 +38,7 @@ STOCK_MESSAGES_FILE = "stocks_messages.json"
 LOGO_FILE = "logo.png"
 
 # Stock configuration
+IPO_COST = 1000
 STOCK_SYMBOLS = [
     "$BBST", "$PETE", "$SWAG", "$GAGE", "$HNME", "$WREX", "$LAND", 
     "$BRAN", "$KYLE", "$HAKM", "$SAM", #"$NUTB", "$MJRK"
@@ -49,7 +51,6 @@ USER_TO_TICKER = {
     "203284441122996224": "$WREX", "690423460027039755": "$LAND",
     "490011081251487766": "$BRAN", "205044983382802432": "$KYLE",
     "126535729156194304": "$GAGE", "127566924992217089": "$SAM",
-    #"380842798359904267": "$NUTB", "185924063464521730": "$MJRK"
 }
 
 # Update settings
@@ -80,8 +81,9 @@ COMMANDS = {
         ("!gift <@user> <amount>", "Gift $USD to another user")
     ],
     "Stocks": [
-        ("!mystocks or !portfolio", "View your stock portfolio"),
-        ("!stock <symbol>", "Check a stock price and chart")
+        ("!portfolio or !port", "View your stock portfolio"),
+        ("!stock <symbol>", "Check a stock price and chart"),
+        ("!createstock or !ipo <symbol>", "Create your own stock (costs $1000 USD)")
     ],
     "Info": [
         ("!about", "About this bot"),

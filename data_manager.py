@@ -37,7 +37,7 @@ class DataManager:
         """Save data to a JSON file"""
         try:
             with open(filename, "w") as f:
-                json.dump(data, f, indent=4)
+                json.dump(data, f, indent=0)
             logger.debug(f"Data saved to {filename}")
         except Exception as e:
             logger.error(f"Error saving to {filename}: {e}")

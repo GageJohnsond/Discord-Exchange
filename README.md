@@ -62,4 +62,4 @@ The bot is organized into modular components:
 
 ## Currency Earning
 
-Users can earn $CCD (CH3F Clan Dollars) in several ways
+Users can earn currency by being active in the server.
