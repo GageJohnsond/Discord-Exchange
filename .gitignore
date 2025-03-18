@@ -17,5 +17,8 @@ stocks_messages.json
 leaderboard_messages.json
 *.json
 
-#ignore venv
+#Ignore venv
 venv/
+
+#Ignore DS_Store
+.DS_Store
