@@ -260,8 +260,16 @@ class StockLeaderboardView(View):
     
     def get_embed(self):
         """Generate the stock leaderboard embed"""
+        # Get all symbols and their prices from StockManager
+        all_symbols = StockManager.get_all_symbols()
+        stock_prices = {}
+        
+        for symbol in all_symbols:
+            if symbol in StockManager.stock_prices:
+                stock_prices[symbol] = StockManager.stock_prices[symbol]
+        
         # Sort stocks by price (highest first)
-        sorted_stocks = sorted(StockManager.stock_prices.items(), key=lambda x: x[1], reverse=True)
+        sorted_stocks = sorted(stock_prices.items(), key=lambda x: x[1], reverse=True)
         
         # Create description
         desc = ""
@@ -274,6 +282,9 @@ class StockLeaderboardView(View):
                 change = f" {emoji} {pct_change:.1f}%"
             
             desc += f"{i+1}. {symbol}: **${price:.2f} USD**{change}\n"
+        
+        if not desc:
+            desc = "No active stocks found."
         
         # Create embed
         embed = discord.Embed(

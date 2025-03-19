@@ -253,7 +253,8 @@ class EventHandlers:
         
         logger.info("Posting stock charts...")
         
-        for symbol in config.STOCK_SYMBOLS:
+        # Use StockManager.get_all_symbols() instead of config.STOCK_SYMBOLS
+        for symbol in StockManager.get_all_symbols():
             # Skip if message already exists and is valid
             if symbol in StockManager.stock_messages:
                 try:
@@ -293,7 +294,8 @@ class EventHandlers:
         
         logger.info("Posting missing stock charts...")
         
-        for symbol in config.STOCK_SYMBOLS:
+        # Use StockManager.get_all_symbols() instead of config.STOCK_SYMBOLS
+        for symbol in StockManager.get_all_symbols():
             # Skip if message already exists
             if symbol in StockManager.stock_messages:
                 continue

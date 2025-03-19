@@ -187,12 +187,13 @@ async def create_stock(ctx, symbol, bot=None):
     # Check if user already has a stock
     user_id = str(ctx.author.id)
     
-    for uid, sym in config.USER_TO_TICKER.items():
-        if uid == user_id:
-            return f"⚠️ You already have a stock: {sym}"
+    # Use StockManager to check if user already has a stock
+    user_stock = StockManager.get_user_stock(user_id)
+    if user_stock:
+        return f"⚠️ You already have a stock: {user_stock}"
     
     # Check if symbol already exists
-    if symbol in config.STOCK_SYMBOLS:
+    if symbol in StockManager.get_all_symbols():
         return f"⚠️ Stock symbol {symbol} already exists. Please choose another."
         
     # Check if user has enough funds
@@ -205,39 +206,13 @@ async def create_stock(ctx, symbol, bot=None):
     # Charge the user
     UserManager.update_balance(ctx.author.id, -config.IPO_COST)
     
-    # Add stock to config
-    from pathlib import Path
-    import re
+    # Add stock to the system via StockManager
+    success = await StockManager.add_stock(symbol, user_id)
     
-    # Add to in-memory config
-    config.STOCK_SYMBOLS.append(symbol)
-    config.USER_TO_TICKER[user_id] = symbol
-    
-    # Update config.py file
-    config_path = Path('config.py')
-    if config_path.exists():
-        config_text = config_path.read_text()
-        
-        # Update STOCK_SYMBOLS list
-        symbols_pattern = r'(STOCK_SYMBOLS\s*=\s*\[)([^\]]*?)(\])'
-        symbols_replacement = r'\1\2, "{}"\3'.format(symbol)
-        config_text = re.sub(symbols_pattern, symbols_replacement, config_text)
-        
-        # Update USER_TO_TICKER dictionary
-        ticker_pattern = r'(USER_TO_TICKER\s*=\s*\{)([^}]*?)(\})'
-        ticker_replacement = r'\1\2, "{}": "{}"\3'.format(user_id, symbol)
-        config_text = re.sub(ticker_pattern, ticker_replacement, config_text)
-        
-        # Write updated config
-        config_path.write_text(config_text)
-    
-    # Initialize stock price and history in StockManager
-    starting_price = round(random.uniform(config.NEW_STOCK_MIN_PRICE, config.NEW_STOCK_MAX_PRICE), 2)
-    StockManager.stock_prices[symbol] = starting_price
-    StockManager.price_history[symbol] = [starting_price]
-    
-    # Save updated stock data
-    StockManager.save_stocks()
+    if not success:
+        # Refund the user if there was an error
+        UserManager.update_balance(ctx.author.id, config.IPO_COST)
+        return "❌ There was an error creating your stock. Please try again."
     
     # Create stock screener message
     asyncio.create_task(create_stock_screener(ctx, symbol, bot))
@@ -245,7 +220,7 @@ async def create_stock(ctx, symbol, bot=None):
     # Create success message
     embed = discord.Embed(
         title="🚀 Stock Created Successfully!",
-        description=f"Congratulations {ctx.author.mention}! You've successfully created **{symbol}** stock.\nStarting price: **${starting_price:.2f} USD**",
+        description=f"Congratulations {ctx.author.mention}! You've successfully created **{symbol}** stock.\nStarting price: **${StockManager.stock_prices[symbol]:.2f} USD**",
         color=config.COLOR_SUCCESS
     )
     
@@ -284,22 +259,6 @@ async def create_stock_screener(ctx, symbol, bot=None):
         StockManager.save_stock_messages()
     except Exception as e:
         logger.error(f"Error creating stock screener for {symbol}: {e}")
-
-async def admin_check_bankruptcy(ctx, bot):
-    """Admin command to check and handle any bankrupt stocks"""
-    # Only allow certain user IDs to run this command
-    ADMIN_IDS = ["126535729156194304"]  # Add admin ID's
-    
-    if str(ctx.author.id) not in ADMIN_IDS:
-        return "❌ You don't have permission to use this command."
-    
-    # Run the emergency bankruptcy check
-    results = await StockManager.handle_emergency_bankruptcies(bot)
-    
-    if results:
-        return "✅ Emergency bankruptcy check completed. See logs for details."
-    else:
-        return "✅ No stocks requiring bankruptcy were found."
 
 def about(ctx):
     """Display information about the bot"""
@@ -381,20 +340,10 @@ async def process_command(bot, message):
         elif command in ['mystocks', 'portfolio', 'port']:
             return mystocks(ctx)
         
-        elif command == 'stock':
-            if len(args) < 1:
-                return "Please specify a stock symbol. Example: !stock SHNE"
-            await stock_command(ctx, args[0], bot)
-            return None  # This command handles its own response
-        
         elif command in ['createstock', 'ipo']:
             if len(args) < 1:
                 return "Please specify a stock symbol. Example: !createstock XYZ"
             return await create_stock(ctx, args[0], bot)
-        
-        elif command == 'admin_check_bankruptcy':
-            # Admin command to check and handle bankruptcies
-            return await admin_check_bankruptcy(ctx, bot)
         
         elif command == 'about':
             return about(ctx)

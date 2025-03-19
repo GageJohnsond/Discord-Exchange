@@ -24,9 +24,11 @@ class StockManager:
     """Class to handle all stock market simulation logic"""
     
     # Global stock data
-    stock_prices = {}        # Current prices for all stocks
-    price_history = {}       # Historical prices for all stocks
-    stock_messages = {}      # Discord message IDs for stock charts
+    stock_symbols = []        # List of active stock symbols
+    user_to_ticker = {}       # Mapping of user ID to their stock symbol
+    stock_prices = {}         # Current prices for all stocks
+    price_history = {}        # Historical prices for all stocks
+    stock_messages = {}       # Discord message IDs for stock charts
     
     # Market condition variables
     current_min_change = config.STOCK_PRICE_MIN_CHANGE 
@@ -61,11 +63,24 @@ class StockManager:
             with open(cls.STOCKS_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
             
-            # Validate required fields exist
+            # Validate required fields exist in old format (backward compatibility)
             required_fields = ["STOCK_PRICES", "PRICE_HISTORY"]
             if all(field in data for field in required_fields):
                 cls.stock_prices = data["STOCK_PRICES"]
                 cls.price_history = data["PRICE_HISTORY"]
+                
+                # Load symbols and mappings if available in new format
+                if "STOCK_SYMBOLS" in data:
+                    cls.stock_symbols = data["STOCK_SYMBOLS"]
+                else:
+                    # Fallback to config for backward compatibility
+                    cls.stock_symbols = list(config.STOCK_SYMBOLS)
+                
+                if "USER_TO_TICKER" in data:
+                    cls.user_to_ticker = data["USER_TO_TICKER"]
+                else:
+                    # Fallback to config for backward compatibility
+                    cls.user_to_ticker = dict(config.USER_TO_TICKER)
                 
                 # Load market conditions if available
                 if "MARKET_CONDITION" in data:
@@ -94,6 +109,8 @@ class StockManager:
         data = {
             "STOCK_PRICES": cls.stock_prices,
             "PRICE_HISTORY": cls.price_history,
+            "STOCK_SYMBOLS": cls.stock_symbols,
+            "USER_TO_TICKER": cls.user_to_ticker,
             "MARKET_CONDITION": cls.market_condition,
             "CURRENT_MIN_CHANGE": cls.current_min_change,
             "CURRENT_MAX_CHANGE": cls.current_max_change,
@@ -110,18 +127,22 @@ class StockManager:
     @classmethod
     def _generate_new_stocks(cls) -> None:
         """Generate new stock data from scratch"""
+        # Initialize with values from config for the first run
+        cls.stock_symbols = list(config.STOCK_SYMBOLS)
+        cls.user_to_ticker = dict(config.USER_TO_TICKER)
+        
         # Create initial stock prices
         cls.stock_prices = {
             symbol: round(random.uniform(
                 config.NEW_STOCK_MIN_PRICE, 
                 config.NEW_STOCK_MAX_PRICE), 2) 
-            for symbol in config.STOCK_SYMBOLS
+            for symbol in cls.stock_symbols
         }
         
         # Initialize price history with starting prices
         cls.price_history = {
             symbol: [cls.stock_prices[symbol]] 
-            for symbol in config.STOCK_SYMBOLS
+            for symbol in cls.stock_symbols
         }
         
         # Set initial market condition
@@ -162,6 +183,14 @@ class StockManager:
             logger.debug("Stock message IDs saved.")
         except Exception as e:
             logger.error(f"Error saving stock message IDs: {e}")
+
+    @classmethod
+    def get_all_symbols(cls) -> list:
+        return cls.stock_symbols
+    
+    @classmethod
+    def get_user_stock(cls, user_id) -> str:
+        return cls.user_to_ticker.get(str(user_id))
     
     @classmethod
     def check_market_condition(cls) -> None:
@@ -250,7 +279,7 @@ class StockManager:
         
         # Update each stock price based on current market condition
         # Use a copy of the list since we might modify it during iteration
-        current_symbols = list(config.STOCK_SYMBOLS)
+        current_symbols = list(cls.stock_symbols)
         
         for symbol in current_symbols:
             # First check if the stock is already at or below 0
@@ -301,6 +330,27 @@ class StockManager:
         
         # Return bankruptcy announcements for potential notifications
         return bankruptcy_announcements
+    
+    @classmethod
+    async def add_stock(cls, symbol, user_id) -> bool:
+        try:
+            # Add to internal data structures
+            cls.stock_symbols.append(symbol)
+            cls.user_to_ticker[str(user_id)] = symbol
+            
+            # Initialize price and history
+            starting_price = round(random.uniform(config.NEW_STOCK_MIN_PRICE, config.NEW_STOCK_MAX_PRICE), 2)
+            cls.stock_prices[symbol] = starting_price
+            cls.price_history[symbol] = [starting_price]
+            
+            # Save changes
+            cls.save_stocks()
+            logger.info(f"Added new stock {symbol} for user {user_id}")
+            return True
+        except Exception as e:
+            logger.error(f"Error adding new stock {symbol}: {e}")
+            return False
+    
     @classmethod
     def buy_stock(cls, symbol: str, user_id: str) -> float:
         """
@@ -349,6 +399,7 @@ class StockManager:
         # Save changes
         cls.save_stocks()
         return price
+        
     @classmethod
     async def sell_stock(cls, symbol: str, user_id: str, bot=None) -> Tuple[float, bool, bool]:
         """
@@ -596,7 +647,7 @@ class StockManager:
     async def handle_bankruptcy(cls, symbol, bot=None):
         """
         Handle a stock going bankrupt (price reaching 0 or below)
-        - Remove stock from config
+        - Remove stock from stored symbols
         - Delete stock screener message
         - Remove stock from all user inventories
         - Remove stock from internal tracking structures
@@ -611,7 +662,7 @@ class StockManager:
         try:
             # Find associated user ID before deleting anything
             associated_user_id = None
-            for user_id, ticker in list(config.USER_TO_TICKER.items()):
+            for user_id, ticker in list(cls.user_to_ticker.items()):
                 if ticker == symbol:
                     associated_user_id = user_id
                     break
@@ -689,108 +740,28 @@ class StockManager:
                 del cls.price_history[symbol]
                 logger.info(f"Removed {symbol} from price_history")
             
-            # 4. Remove from config.STOCK_SYMBOLS
-            if symbol in config.STOCK_SYMBOLS:
-                config.STOCK_SYMBOLS.remove(symbol)
-                logger.info(f"Removed {symbol} from config.STOCK_SYMBOLS")
+            # 4. Remove from stock_symbols list
+            if symbol in cls.stock_symbols:
+                cls.stock_symbols.remove(symbol)
+                logger.info(f"Removed {symbol} from stock_symbols")
             else:
-                logger.warning(f"{symbol} not found in config.STOCK_SYMBOLS")
+                logger.warning(f"{symbol} not found in stock_symbols")
             
-            # 5. Remove from config.USER_TO_TICKER
+            # 5. Remove from user_to_ticker mapping
             if associated_user_id:
-                if associated_user_id in config.USER_TO_TICKER:
-                    del config.USER_TO_TICKER[f"{associated_user_id}"]
-                    logger.info(f"Removed user {associated_user_id} association with {symbol} from config.USER_TO_TICKER")
+                if associated_user_id in cls.user_to_ticker:
+                    del cls.user_to_ticker[associated_user_id]
+                    logger.info(f"Removed user {associated_user_id} association with {symbol} from user_to_ticker")
                 else:
-                    logger.warning(f"User {associated_user_id} not found in USER_TO_TICKER dict")
+                    logger.warning(f"User {associated_user_id} not found in user_to_ticker dict")
             else:
-                logger.warning(f"No user associated with {symbol} found in config.USER_TO_TICKER")
+                logger.warning(f"No user associated with {symbol} found in user_to_ticker")
             
-            # 6. Update config.py file to reflect changes
-            try:
-                from pathlib import Path
-                import re
-                
-                config_path = Path('config.py')
-                if config_path.exists():
-                    # Read the original file content
-                    with open(config_path, 'r') as f:
-                        config_text = f.read()
-                    original_text = config_text
-                    
-                    # Update STOCK_SYMBOLS list - remove the symbol
-                    pattern = f'"{symbol}"'
-                    # Try all possible patterns for removing the symbol
-                    config_text = config_text.replace(f", {pattern}", "")  # If it's not the first item
-                    config_text = config_text.replace(f"{pattern}, ", "")  # If it's not the last item
-                    config_text = config_text.replace(pattern, "")  # If it's the only item
-                    
-                    # Update USER_TO_TICKER dict - remove the mapping
-                    if associated_user_id:
-                        # Method 1: Find and remove the entire key-value pair using regex
-                        user_ticker_pattern = f'"{associated_user_id}"\\s*:\\s*"{symbol}"'
-                        
-                        # Try different patterns for removal
-                        # Case 1: If it's at the start and has a comma after (e.g., "123": "$ABC", ...)
-                        config_text = re.sub(f'{user_ticker_pattern},\\s*', '', config_text)
-                        
-                        # Case 2: If it's in the middle/end and has a comma before (e.g., ..., "123": "$ABC")
-                        config_text = re.sub(f',\\s*{user_ticker_pattern}', '', config_text)
-                        
-                        # Case 3: If it's the only entry
-                        config_text = re.sub(f'{user_ticker_pattern}', '', config_text)
-                        
-                        # Method 2: Recreate the entire USER_TO_TICKER dictionary if regex fails
-                        # This is a fallback in case the regex replacement didn't work properly
-                        if config_text == original_text:
-                            logger.warning(f"Regex replacement failed for {associated_user_id}:{symbol}, using alternative method")
-                            
-                            # Get the start and end of the USER_TO_TICKER dictionary
-                            user_to_ticker_start = config_text.find("USER_TO_TICKER = {")
-                            user_to_ticker_end = config_text.find("}", user_to_ticker_start)
-                            
-                            if user_to_ticker_start != -1 and user_to_ticker_end != -1:
-                                # Extract the dictionary portion
-                                dict_text = config_text[user_to_ticker_start + 17:user_to_ticker_end].strip()
-                                
-                                # Split by commas and filter out the entry we want to remove
-                                entries = [entry.strip() for entry in dict_text.split(",")]
-                                filtered_entries = [entry for entry in entries if entry and f'"{associated_user_id}"' not in entry]
-                                
-                                # Rebuild the dictionary text
-                                new_dict_text = ",\n    ".join(filtered_entries)
-                                
-                                # Replace in the config file
-                                new_config_text = (
-                                    config_text[:user_to_ticker_start + 17] + 
-                                    "\n    " + new_dict_text + "\n" + 
-                                    config_text[user_to_ticker_end:]
-                                )
-                                
-                                config_text = new_config_text
-                    
-                    # Check if the text was actually modified
-                    if config_text != original_text:
-                        # Write updated config
-                        with open(config_path, 'w') as f:
-                            f.write(config_text)
-                        logger.info(f"Updated config.py to remove bankrupt stock {symbol}")
-                    else:
-                        logger.warning(f"No changes made to config.py when removing {symbol}")
-                else:
-                    logger.error("config.py file not found")
-                
-            except Exception as e:
-                logger.error(f"Error updating config file for bankrupt stock {symbol}: {e}", exc_info=True)
-            
-            # 7. Save stock data
+            # 6. Save the updated data
             cls.save_stocks()
-            logger.info(f"Saved updated stock data after {symbol} bankruptcy")
-            
-            # 8. Final confirmation
             logger.info(f"✅ Successfully completed bankruptcy process for {symbol}")
             
-            # 9. Return bankruptcy announcement data for potential notification
+            # 7. Return bankruptcy announcement data for potential notification
             return bankruptcy_announcement
             
         except Exception as e:
