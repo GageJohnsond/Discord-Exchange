@@ -40,24 +40,29 @@ class ChartView(View):
             emoji = "📈" if pct_change >= 0 else "📉"
             change_str = f" {emoji} {pct_change:.1f}%"
         
+        # Market condition indicator - add crash warning
+        market_indicator = ""
+        if StockManager.market_condition == "crash":
+            market_indicator = "🔥 CRASH! "
+        
         # Determine color based on price (highlight danger when close to bankruptcy)
         if price <= 10:
             if price <= 5:
                 # Critical range
                 color = config.COLOR_ERROR
-                title_prefix = "⚠️ CRITICAL - "
+                title_prefix = f"⚠️ CRITICAL - {market_indicator}"
             else:
                 # Warning range
                 color = discord.Color.orange()
-                title_prefix = "⚠️ WARNING - "
+                title_prefix = f"⚠️ WARNING - {market_indicator}"
         else:
             # Normal range
             color = config.COLOR_INFO
-            title_prefix = ""
+            title_prefix = market_indicator
         
         # Create embed with market condition info
         embed = discord.Embed(
-            title=f"{title_prefix}{self.symbol} | Price - ${price:.2f} USD{change_str}",
+            title=f"{title_prefix}{self.symbol} | Price - ${price:.2f} CCD{change_str}",
             color=color
         )
         embed.set_image(url="attachment://chart.png")
@@ -71,6 +76,14 @@ class ChartView(View):
                 inline=False
             )
         
+        # Add market crash warning if applicable
+        if StockManager.market_condition == "crash":
+            embed.add_field(
+                name="🔥 MARKET CRASH WARNING",
+                value="The market is currently experiencing a severe crash. All stocks are facing strong downward pressure.",
+                inline=False
+            )
+        
         if len(price_history) > 1:
             # Add price info and market info to footer
             start_price = price_history[0]
@@ -81,7 +94,7 @@ class ChartView(View):
             )
         
         return file, embed
-
+    
     async def update_chart(self) -> None:
         """Edit the existing message with an updated stock chart"""
         if not self.message:
@@ -336,8 +349,8 @@ class HelpView(View):
             name="📈 Stock Market Commands",
             value=(
                 "`!portfolio` or `!port` - View your stock portfolio\n"
-                "`!stock <symbol>` - Check a specific stock\n"
-                f"`!createstock <symbol>` or `!ipo <symbol>` - Create your own stock (costs ${config.IPO_COST} USD)"
+                "`!rebrand <symbol>` or `rename <symbol>` -  Rebrand your stock"
+                f"`!createstock <symbol>` or `!ipo <symbol>` - Create your own stock (costs ${config.IPO_COST} CCD)"
             ),
             inline=False
         )
