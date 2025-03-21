@@ -282,7 +282,7 @@ class EventHandlers:
             inline=False
         )
         
-        embed.set_footer(text="The CH3F Exchange | Market conditions update every 9 hours")
+        embed.set_footer(text="Market conditions update every 9 hours")
         
         # Send the announcement
         try:
