@@ -625,7 +625,7 @@ class StockManager:
         
         # Add labels and grid
         ax.set_xlabel("Time Steps")
-        ax.set_ylabel(f"{symbol} Price (USD)")
+        ax.set_ylabel(f"{symbol} Price ({config.UOM})")
         ax.grid(True)
         
         # Add watermark

@@ -21,11 +21,12 @@ LEADERBOARD_CHANNEL_ID = 1347853992008351764
 TERMINAL_CHANNEL_ID = 1347853900799152211
 
 # Economy settings
+UOM="USD"
 DAILY_CAP = 60
 DAILY_REWARD_MIN = 15
 DAILY_REWARD_MAX = 100
 SELLING_FEE = 7  # Fee to sell stocks
-REBRAND_FEE = 500
+REBRAND_FEE = 500 #Fee to rename stock
 
 # Message rewards
 MESSAGE_REWARD_MIN = 1
@@ -65,22 +66,6 @@ COLOR_WARNING = 0xFFD700  # Gold
 COLOR_SPECIAL = 0xE91E63  # Pink
 COLOR_DISCORD = 0x7289DA  # Discord Blurple
 
-# Command list for help 
-COMMANDS = {
-    "Economy": [
-        ("!balance or !bal", "Check your $USD balance"),
-        ("!daily", "Claim daily reward"),
-        ("!gift <@user> <amount>", "Gift $USD to another user")
-    ],
-    "Stocks": [
-        ("!portfolio or !port", "View your stock portfolio"),
-        ("!createstock or !ipo <symbol>", "Create your own stock (costs $1000 USD)")
-    ],
-    "Info": [
-        ("!about", "About this bot"),
-        ("!help", "Show this command menu")
-    ]
-}
 
 # Default user data
 DEFAULT_USER_DATA = {

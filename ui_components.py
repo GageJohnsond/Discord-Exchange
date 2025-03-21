@@ -62,7 +62,7 @@ class ChartView(View):
         
         # Create embed with market condition info
         embed = discord.Embed(
-            title=f"{title_prefix}{self.symbol} | Price - ${price:.2f} CCD{change_str}",
+            title=f"{title_prefix}{self.symbol} | Price - ${price:.2f} {config.UOM}{change_str}",
             color=color
         )
         embed.set_image(url="attachment://chart.png")
@@ -114,7 +114,7 @@ class ChartView(View):
         
         if bal < price:
             await interaction.response.send_message(
-                f"⚠️ {interaction.user.mention}, not enough $USD to buy {self.symbol}.", 
+                f"⚠️ {interaction.user.mention}, not enough ${config.UOM} to buy {self.symbol}.", 
                 ephemeral=True
             )
             return
@@ -127,8 +127,8 @@ class ChartView(View):
         
         # Add warning about same-day selling fee
         await interaction.response.send_message(
-            f"✅ {interaction.user.mention} bought a share of {self.symbol} for ${price:.2f} USD.\n"
-            f"⚠️ *Note: Selling this stock today will incur a ${config.SELLING_FEE:.2f} USD day trading fee.*", 
+            f"✅ {interaction.user.mention} bought a share of {self.symbol} for ${price:.2f} {config.UOM}.\n"
+            f"⚠️ *Note: Selling this stock today will incur a ${config.SELLING_FEE:.2f} {config.UOM} day trading fee.*", 
             ephemeral=True
         )
         await self.update_chart()
@@ -162,9 +162,9 @@ class ChartView(View):
         if same_day_sale:
             fee = base_price - final_price
             message = (f"💰 {interaction.user.mention} sold a share of {self.symbol} for "
-                    f"${final_price:.2f} USD (day trading fee: ${fee:.2f}).")
+                    f"${final_price:.2f} {config.UOM} (day trading fee: ${fee:.2f}).")
         else:
-            message = f"💰 {interaction.user.mention} sold a share of {self.symbol} for ${final_price:.2f} USD."
+            message = f"💰 {interaction.user.mention} sold a share of {self.symbol} for ${final_price:.2f} {config.UOM}."
         
         # Add bankruptcy notice if triggered
         if bankruptcy_triggered:
@@ -237,14 +237,14 @@ class BalanceLeaderboardView(View):
             prefix = f"{rank_emoji[i]} " if i < 3 else f"{i+1}. "
             
             # Format with cash + portfolio = total
-            desc += f"{prefix}{name}: **${total:.2f} USD**\n"
+            desc += f"{prefix}{name}: **${total:.2f} {config.UOM}**\n"
         
         if not desc:
             desc = "No users found in the database."
         
         # Create embed
         embed = discord.Embed(
-            title="🏆 $USD Total Worth Leaderboard",
+            title=f"🏆 ${config.UOM} Total Worth Leaderboard",
             description=desc,
             color=config.COLOR_WARNING
         )
@@ -294,7 +294,7 @@ class StockLeaderboardView(View):
                 emoji = "📈" if pct_change >= 0 else "📉"
                 change = f" {emoji} {pct_change:.1f}%"
             
-            desc += f"{i+1}. {symbol}: **${price:.2f} USD**{change}\n"
+            desc += f"{i+1}. {symbol}: **${price:.2f} {config.UOM}**{change}\n"
         
         if not desc:
             desc = "No active stocks found."
@@ -337,9 +337,9 @@ class HelpView(View):
         embed.add_field(
             name="💰 Economy Commands",
             value=(
-                "`!balance` or `!bal` - Check your $USD balance\n"
+                f"`!balance` or `!bal` - Check your ${config.UOM} balance\n"
                 "`!daily` - Claim daily reward\n"
-                "`!gift <@user> <amount>` - Gift $USD to another user"
+                f"`!gift <@user> <amount>` - Gift ${config.UOM} to another user"
             ),
             inline=False
         )
@@ -350,7 +350,7 @@ class HelpView(View):
             value=(
                 "`!portfolio` or `!port` - View your stock portfolio\n"
                 "`!rebrand <symbol>` or `rename <symbol>` -  Rebrand your stock"
-                f"`!createstock <symbol>` or `!ipo <symbol>` - Create your own stock (costs ${config.IPO_COST} CCD)"
+                f"`!createstock <symbol>` or `!ipo <symbol>` - Create your own stock (costs ${config.IPO_COST} {config.UOM})"
             ),
             inline=False
         )

@@ -453,7 +453,7 @@ async def admin_gift(ctx, target, amount, bot=None):
     # Create a response embed
     embed = discord.Embed(
         title="💰 Admin Currency Action",
-        description=f"{'Added' if amount_value >= 0 else 'Removed'} **${abs(amount_value):.2f} USD** {'to' if amount_value >= 0 else 'from'} {target}",
+        description=f"{'Added' if amount_value >= 0 else 'Removed'} **${abs(amount_value):.2f} {config.UOM}** {'to' if amount_value >= 0 else 'from'} {target}",
         color=config.COLOR_WARNING
     )
     
@@ -545,7 +545,7 @@ async def admin_create_stock(ctx, symbol, initial_price=None, user=None, bot=Non
     # Create response embed
     embed = discord.Embed(
         title="🔧 Admin: Stock Created",
-        description=f"Created new stock **{symbol}** with initial price **${price:.2f} USD**",
+        description=f"Created new stock **{symbol}** with initial price **${price:.2f} {config.UOM}**",
         color=config.COLOR_WARNING
     )
     
@@ -817,7 +817,7 @@ async def admin_award_all(ctx, amount, bot=None):
     # Create response embed
     embed = discord.Embed(
         title="🔧 Currency Awarded to All Users",
-        description=f"{'Added' if amount_value >= 0 else 'Removed'} **${abs(amount_value):.2f} USD** {'to' if amount_value >= 0 else 'from'} all users",
+        description=f"{'Added' if amount_value >= 0 else 'Removed'} **${abs(amount_value):.2f} {config.UOM}** {'to' if amount_value >= 0 else 'from'} all users",
         color=config.COLOR_WARNING
     )
     

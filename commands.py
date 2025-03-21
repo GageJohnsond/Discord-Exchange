@@ -31,12 +31,12 @@ def balance(ctx):
     
     embed = discord.Embed(
         title="💰 Balance",
-        description=f"Your balance: **${bal:.2f} USD**",
+        description=f"Your balance: **${bal:.2f} {config.UOM}**",
         color=config.COLOR_INFO
     )
     
     if bank_amt > 0:
-        embed.add_field(name="Bank Balance", value=f"**${bank_amt:.2f} USD**")
+        embed.add_field(name="Bank Balance", value=f"**${bank_amt:.2f} {config.UOM}**")
     
     return embed
 
@@ -62,14 +62,14 @@ def daily(ctx):
     
     embed = discord.Embed(
         title="🎁 Daily Reward",
-        description=f"You claimed your daily **${reward:.2f} USD**!",
+        description=f"You claimed your daily **${reward:.2f} {config.UOM}**!",
         color=config.COLOR_WARNING
     )
     
     return embed
 
 def gift(ctx, user, amount):
-    """Gift USD to another user"""
+    """Gift $ to another user"""
     # Validate input
     if amount <= 0:
         return "⚠️ Invalid amount. Please enter a positive number."
@@ -81,7 +81,7 @@ def gift(ctx, user, amount):
     # Check balance
     bal = UserManager.get_balance(ctx.author.id)
     if bal < amount:
-        return "❌ You don't have enough $USD for this gift."
+        return "❌ You don't have enough ${config.UOM} for this gift."
     
     # Transfer the amount
     UserManager.update_balance(ctx.author.id, -amount)
@@ -90,7 +90,7 @@ def gift(ctx, user, amount):
     # Send confirmation
     embed = discord.Embed(
         title="🎁 Gift Sent",
-        description=f"You gifted **${amount:.2f} USD** to {user.mention}!",
+        description=f"You gifted **${amount:.2f} {config.UOM}** to {user.mention}!",
         color=config.COLOR_SPECIAL
     )
     
@@ -132,7 +132,7 @@ def mystocks(ctx):
         if stock in StockManager.stock_prices:
             value = StockManager.stock_prices[stock] * quantity
             total_value += value
-            desc += f"{stock}: **x{quantity}** (${value:.2f} USD)\n"
+            desc += f"{stock}: **x{quantity}** (${value:.2f} {config.UOM})\n"
         else:
             desc += f"{stock}: **x{quantity}** (Unknown value)\n"
     
@@ -145,7 +145,7 @@ def mystocks(ctx):
     
     embed.add_field(
         name="Total Portfolio Value",
-        value=f"**${total_value:.2f} USD**"
+        value=f"**${total_value:.2f} {config.UOM}**"
     )
     
     return embed
@@ -182,12 +182,12 @@ async def rebrand_stock(ctx, new_symbol, bot=None):
     bal = UserManager.get_balance(ctx.author.id)
         
     if bal < config.REBRAND_FEE:
-        return f"❌ Insufficient funds. Rebranding costs ${config.REBRAND_FEE} USD. You have ${bal:.2f} CCD."
+        return f"❌ Insufficient funds. Rebranding costs ${config.REBRAND_FEE} {config.UOM}. You have ${bal:.2f} {config.UOM}."
     
     # Create confirmation message
     embed = discord.Embed(
         title="🔄 Stock Rebranding Confirmation",
-        description=f"Are you sure you want to rebrand your stock from **{current_symbol}** to **{new_symbol}**?\n\nThis will cost **${config.REBRAND_FEE} USD**.",
+        description=f"Are you sure you want to rebrand your stock from **{current_symbol}** to **{new_symbol}**?\n\nThis will cost **${config.REBRAND_FEE} {config.UOM}**.",
         color=config.COLOR_WARNING
     )
     
@@ -281,7 +281,7 @@ async def rebrand_stock(ctx, new_symbol, bot=None):
                 
                 response_embed.add_field(
                     name="Current Price",
-                    value=f"${price:.2f} CCD",
+                    value=f"${price:.2f} {config.UOM}",
                     inline=True
                 )
                 
@@ -293,7 +293,7 @@ async def rebrand_stock(ctx, new_symbol, bot=None):
                 
                 response_embed.add_field(
                     name="Fee Paid",
-                    value=f"${config.REBRAND_FEE} CCD",
+                    value=f"${config.REBRAND_FEE} {config.UOM}",
                     inline=True
                 )
                 
@@ -375,7 +375,7 @@ async def create_stock(ctx, symbol, bot=None):
     bal = UserManager.get_balance(ctx.author.id)
         
     if bal < config.IPO_COST:
-        return f"❌ Insufficient funds. Creating a stock costs ${config.IPO_COST} USD. You have ${bal:.2f} USD."
+        return f"❌ Insufficient funds. Creating a stock costs ${config.IPO_COST} {config.UOM}. You have ${bal:.2f} {config.UOM}."
         
     # Charge the user
     UserManager.update_balance(ctx.author.id, -config.IPO_COST)
@@ -394,7 +394,7 @@ async def create_stock(ctx, symbol, bot=None):
     # Create success message
     embed = discord.Embed(
         title="🚀 Stock Created Successfully!",
-        description=f"Congratulations {ctx.author.mention}! You've successfully created **{symbol}** stock.\nStarting price: **${StockManager.stock_prices[symbol]:.2f} USD**",
+        description=f"Congratulations {ctx.author.mention}! You've successfully created **{symbol}** stock.\nStarting price: **${StockManager.stock_prices[symbol]:.2f} {config.UOM}**",
         color=config.COLOR_SUCCESS
     )
     
@@ -420,7 +420,7 @@ def about(ctx):
     
     embed.add_field(
         name="Features",
-        value="• Virtual currency ($USD)\n• Stock market simulation\n• Interactive commands\n• Reaction rewards"
+        value=f"• Virtual currency (${config.UOM})\n• Stock market simulation\n• Interactive commands\n• Reaction rewards"
     )
     
     embed.add_field(
@@ -467,7 +467,7 @@ async def process_command(bot, message):
                 else:
                     user_id = args[0].strip('<@!>')
                     if not user_id.isdigit():
-                        return "Please mention a user to gift USD to."
+                        return f"Please mention a user to gift {config.UOM} to."
                     user = bot.get_user(int(user_id)) or await bot.fetch_user(int(user_id))
                 
                 amount = float(args[1])
