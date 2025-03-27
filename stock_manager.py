@@ -226,31 +226,37 @@ class StockManager:
                 "name": "bear", 
                 "weight": 0.2,
                 "min_change": random.uniform(-5, -1),
-                "max_change": random.uniform(-1, 2),
+                "max_change": random.uniform(0, 2),
             },
             {
                 "name": "bull", 
                 "weight": 0.2,
-                "min_change": random.uniform(-1, 1),
-                "max_change": random.uniform(2, 5),
+                "min_change": random.uniform(-.5, 1),
+                "max_change": random.uniform(2, 5.5),
+            },
+            {
+                "name": "superbull", 
+                "weight": 0.02,
+                "min_change": random.uniform(0, 1),
+                "max_change": random.uniform(4, 8),
             },
             {
                 "name": "volatile", 
                 "weight": 0.2,
-                "min_change": random.uniform(-7, -3),
-                "max_change": random.uniform(3, 7),
+                "min_change": random.uniform(-8, -3),
+                "max_change": random.uniform(3, 8),
             },
             {
                 "name": "stable", 
                 "weight": 0.35,  
-                "min_change": random.uniform(-3, -1),
-                "max_change": random.uniform(1, 3),
+                "min_change": random.uniform(-4, -1),
+                "max_change": random.uniform(1, 4),
             },
             {
                 "name": "crash", 
-                "weight": 0.05,  
-                "min_change": random.uniform(-15, -8),
-                "max_change": random.uniform(-8, -3),
+                "weight": 0.03,  
+                "min_change": random.uniform(-12, -8),
+                "max_change": random.uniform(-8, -4),
             }
         ]
         
