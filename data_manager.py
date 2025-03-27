@@ -29,8 +29,8 @@ class DataManager:
                 json.dump({
                     "STOCK_PRICES": {},
                     "PRICE_HISTORY": {},
-                    "STOCK_SYMBOLS": list(config.STOCK_SYMBOLS),
-                    "USER_TO_TICKER": dict(config.USER_TO_TICKER)
+                    "STOCK_SYMBOLS": {},
+                    "USER_TO_TICKER": {}
                 }, f)
             logger.info(f"Created empty {config.STOCKS_FILE} with initial data")
             
