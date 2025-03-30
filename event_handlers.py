@@ -363,8 +363,6 @@ class EventHandlers:
             inline=False
         )
         
-        embed.set_footer(text="Market conditions update every 9 hours")
-        
         # Send the announcement
         try:
             await channel.send("@everyone", embed=embed)

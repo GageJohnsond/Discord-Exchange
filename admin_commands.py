@@ -768,7 +768,7 @@ async def admin_market_condition(ctx, condition=None, bot=None):
                     inline=False
                 )
                 
-                crash_embed.set_footer(text="The Stock Exchange | Market Crash Triggered by Admin")
+                crash_embed.set_footer(text=f"The {config.NAME} Exchange | Market Crash Triggered by Admin")
                 
                 await terminal_channel.send("@everyone", embed=crash_embed)
                 logger.info(f"Admin {ctx.author.id} triggered market crash announcement")
@@ -964,7 +964,7 @@ async def admin_help(ctx, bot=None):
     # Create help embed with all admin commands
     embed = discord.Embed(
         title="🔧 Admin Commands",
-        description="List of all available admin commands for the Stock Exchange Bot",
+        description=f"List of all available admin commands for the {config.NAME} Exchange Bot",
         color=config.COLOR_WARNING
     )
     
