@@ -41,7 +41,7 @@ def balance(ctx):
     return embed
 
 def daily(ctx):
-    """Claim daily reward command"""
+    """Claim daily reward command with dividend payments"""
     data = DataManager.ensure_user(ctx.author.id)
     user_id = str(ctx.author.id)
     utc_now = datetime.now(pytz.utc)
@@ -58,13 +58,45 @@ def daily(ctx):
     data[user_id]["balance"] += reward
     data[user_id]["last_daily"] = today
     
+    # Process dividends
+    from dividends import DividendManager
+    dividend_results = DividendManager.process_daily_dividends()
+    
+    # Check if user received dividends
+    shareholder_dividend = dividend_results["top_shareholders"].get(user_id, 0)
+    creator_dividend = dividend_results["creators"].get(user_id, 0)
+    total_dividend = shareholder_dividend + creator_dividend
+    
     DataManager.save_data(config.USER_DATA_FILE, data)
     
+    # Create response embed
     embed = discord.Embed(
         title="🎁 Daily Reward",
         description=f"You claimed your daily **${reward:.2f} {config.UOM}**!",
         color=config.COLOR_WARNING
     )
+    
+    # Add dividend info if applicable
+    if total_dividend > 0:
+        embed.add_field(
+            name="💰 Stock Dividends",
+            value=f"You also received **${total_dividend:.2f} {config.UOM}** in dividends!",
+            inline=False
+        )
+        
+        if shareholder_dividend > 0:
+            embed.add_field(
+                name="Shareholder Dividends",
+                value=f"**${shareholder_dividend:.2f} {config.UOM}**",
+                inline=True
+            )
+        
+        if creator_dividend > 0:
+            embed.add_field(
+                name="Money from Investors",
+                value=f"**${creator_dividend:.2f} {config.UOM}**",
+                inline=True
+            )
     
     return embed
 
@@ -95,26 +127,6 @@ def gift(ctx, user, amount):
     )
     
     return embed
-
-def leaderboard(ctx, bot):
-    """Show balance leaderboard"""
-    channel = bot.get_channel(config.LEADERBOARD_CHANNEL_ID)
-    if channel and channel.id != ctx.channel.id:
-        return f"📊 Check out the leaderboards in {channel.mention}!"
-    else:
-        # Show inline leaderboard
-        view = BalanceLeaderboardView()
-        return view.get_embed(ctx.guild)
-
-def stocks(ctx, bot):
-    """Show stock leaderboard"""
-    channel = bot.get_channel(config.STOCK_CHANNEL_ID)
-    if channel and channel.id != ctx.channel.id:
-        return f"📊 Check out the stock market in {channel.mention}!"
-    else:
-        # Show inline leaderboard
-        view = StockLeaderboardView()
-        return view.get_embed()
 
 def mystocks(ctx):
     """View your stock portfolio"""
@@ -408,8 +420,8 @@ async def create_stock(ctx, symbol, bot=None):
 def about(ctx):
     """Display information about the bot"""
     embed = discord.Embed(
-        title="About The Stock Exchange",
-        description="This is a bot built to simulate this Discords stock Exchange.",
+        title=f"About The {config.NAME} Exchange",
+        description=f"This is a bot built to simulate the {config.NAME} Exchange.",
         color=config.COLOR_DISCORD
     )
     
@@ -434,6 +446,232 @@ def help(ctx):
     """Display command list"""
     view = HelpView()
     return view.get_embed()
+
+def dividend_status(ctx):
+    """Check your dividend earnings"""
+    user_id = str(ctx.author.id)
+    DataManager.ensure_user(user_id)
+    
+    # Load user data
+    data = DataManager.load_data(config.USER_DATA_FILE)
+    
+    # Get stocks created by user
+    owned_stock_symbol = None
+    for uid, ticker in StockManager.user_to_ticker.items():
+        if uid == user_id:
+            owned_stock_symbol = ticker
+            break
+    
+    # Get stocks where user is top shareholder
+    top_shareholder_stocks = []
+    for symbol in StockManager.get_all_symbols():
+        # Find all shareholders
+        shareholders = []
+        for uid, udata in data.items():
+            inventory = udata.get("inventory", {})
+            if symbol in inventory and inventory[symbol] > 0:
+                shareholders.append((uid, inventory[symbol]))
+        
+        # Sort by shares
+        shareholders.sort(key=lambda x: x[1], reverse=True)
+        
+        # Check if user is in top 3
+        for rank, (shareholder_id, shares) in enumerate(shareholders[:config.TOP_SHAREHOLDERS_COUNT]):
+            if shareholder_id == user_id:
+                top_shareholder_stocks.append((symbol, shares, rank + 1))
+                break
+    
+    # Get last dividend payment
+    last_dividend = data[user_id].get("last_dividend", {})
+    last_date = last_dividend.get("date", "Never")
+    last_amount = last_dividend.get("amount", 0)
+    
+    # Create embed
+    embed = discord.Embed(
+        title="💰 Dividend Status",
+        description=f"Your dividend earning status",
+        color=config.COLOR_INFO
+    )
+    
+    # Last payment
+    embed.add_field(
+        name="Last Dividend Payment",
+        value=f"**${last_amount:.2f} {config.UOM}** on {last_date}" if last_amount > 0 else "No recent dividends",
+        inline=False
+    )
+    
+    # Creator status
+    if owned_stock_symbol:
+        stock_price = StockManager.stock_prices.get(owned_stock_symbol, 0)
+        
+        # Count shares owned by others
+        other_shares = 0
+        for uid, udata in data.items():
+            if uid != user_id:
+                inventory = udata.get("inventory", {})
+                if owned_stock_symbol in inventory:
+                    other_shares += inventory[owned_stock_symbol]
+        
+        estimated_dividend = round(stock_price * (config.CREATOR_DIVIDEND_PERCENT / 100) * other_shares, 2)
+        
+        embed.add_field(
+            name=f"Owned Stock: {owned_stock_symbol}",
+            value=(
+                f"Current price: **${stock_price:.2f} {config.UOM}**\n"
+                f"Shares held by others: **{other_shares}**\n"
+                f"Est. daily stock income from investors: **${estimated_dividend:.2f} {config.UOM}**"
+            ),
+            inline=False
+        )
+    else:
+        embed.add_field(
+            name="Stock Creator Status",
+            value="You don't own a stock. Create one with `!createstock <symbol>`",
+            inline=False
+        )
+    
+    # Top shareholder status
+    if top_shareholder_stocks:
+        shareholder_desc = ""
+        for symbol, shares, rank in top_shareholder_stocks:
+            stock_price = StockManager.stock_prices.get(symbol, 0)
+            percent = config.TOP_SHAREHOLDER_DIVIDENDS.get(rank - 1, 0)
+            estimated_dividend = round(stock_price * (percent / 100), 2)
+            
+            shareholder_desc += (
+                f"**{symbol}** - Rank #{rank} with {shares} shares\n"
+                f"Est. daily dividend: **${estimated_dividend:.2f} {config.UOM}**\n\n"
+            )
+        
+        embed.add_field(
+            name="Top Shareholder Positions",
+            value=shareholder_desc,
+            inline=False
+        )
+    else:
+        embed.add_field(
+            name="Top Shareholder Status",
+            value="You're not a top 3 shareholder in any stocks\nBuy more shares to earn dividends!",
+            inline=False
+        )
+    
+    embed.set_footer(text=f"Dividends are paid to the top {config.TOP_SHAREHOLDERS_COUNT} shareholders of each stock. Stock owners will earn income from investors.")
+
+    return embed
+
+def decay_risk(ctx):
+    """Check which stocks are at risk of decay"""
+    # Import decay manager
+    from decay import DecayManager
+    
+    # Get total stocks
+    total_stocks = len(StockManager.get_all_symbols())
+    threshold = config.STOCK_DECAY_THRESHOLD
+    
+    # Create embed based on current situation
+    if total_stocks <= threshold:
+        # No decay risk currently
+        embed = discord.Embed(
+            title="📊 Stock Decay Status",
+            description=f"There are currently **{total_stocks}/{threshold}** stocks on the exchange.",
+            color=config.COLOR_SUCCESS
+        )
+        
+        embed.add_field(
+            name="Status",
+            value=f"No stocks are at risk of decay at this time.",
+            inline=False
+        )
+        
+        # Add information about how decay works
+        embed.add_field(
+            name="About Stock Decay",
+            value=(
+                f"When the number of stocks exceeds {threshold}, the least popular "
+                f"stocks will lose their value overtime."
+            ),
+            inline=False
+        )
+    else:
+        # Calculate stocks at risk
+        excess = total_stocks - threshold
+        risk_stocks = DecayManager.get_decay_risk_stocks()
+        
+        embed = discord.Embed(
+            title="⚠️ Stock Decay Warning",
+            description=(
+                f"There are currently **{total_stocks}/{threshold}** stocks on the exchange.\n"
+                f"**{excess}** stocks are experiencing price decay!"
+            ),
+            color=config.COLOR_ERROR
+        )
+        
+        # Add list of stocks at risk
+        if risk_stocks:
+            # Group by risk level
+            definite_decay = []
+            high_risk = []
+            medium_risk = []
+            low_risk = []
+            
+            for symbol, risk in risk_stocks:
+                if risk >= 90:
+                    definite_decay.append(symbol)
+                elif risk >= 50:
+                    high_risk.append(symbol)
+                elif risk >= 25:
+                    medium_risk.append(symbol)
+                else:
+                    low_risk.append(symbol)
+            
+            # Add fields for each risk level
+            if definite_decay:
+                embed.add_field(
+                    name="🔴 Currently Decaying",
+                    value=", ".join([f"**{s}**" for s in definite_decay]),
+                    inline=False
+                )
+            
+            if high_risk:
+                embed.add_field(
+                    name="🟠 High Risk (50-90%)",
+                    value=", ".join([f"**{s}**" for s in high_risk]),
+                    inline=False
+                )
+            
+            if medium_risk:
+                embed.add_field(
+                    name="🟡 Medium Risk (25-50%)",
+                    value=", ".join([f"**{s}**" for s in medium_risk]),
+                    inline=False
+                )
+            
+            if low_risk:
+                embed.add_field(
+                    name="🟢 Low Risk (<25%)",
+                    value=", ".join([f"**{s}**" for s in low_risk]),
+                    inline=False
+                )
+        
+        # Add explanation of what decay means
+        embed.add_field(
+            name="How Decay Works",
+            value=(f"Decaying stocks lose value overtime. To prevent decay, these stocks need more shareholders!\n"),
+            inline=False
+        )
+        
+        # Add advice for owners of at-risk stocks
+        embed.add_field(
+            name="If Your Stock Is At Risk",
+            value=(
+                "• Encourage others to invest in your stock\n"
+                "• Consider offering incentives to shareholders\n"
+                "• If price gets too low, you risk bankruptcy"
+            ),
+            inline=False
+        )
+    
+    return embed
 
 async def process_command(bot, message):
     """Process commands from messages"""
@@ -476,11 +714,11 @@ async def process_command(bot, message):
                 logger.error(f"Error in gift command: {e}")
                 return "Invalid amount. Please use the format: !gift @user amount"
         
-        elif command == 'leaderboard':
-            return leaderboard(ctx, bot)
-        
-        elif command in ['stocks', 'stockmarket']:
-            return stocks(ctx, bot)
+        elif command in ['dividends', 'div']:
+            return dividend_status(ctx)
+
+        elif command in ['decayrisk', 'stockrisk']:
+            return decay_risk(ctx)
         
         elif command in ['mystocks', 'portfolio', 'port']:
             return mystocks(ctx)

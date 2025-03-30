@@ -71,7 +71,14 @@ class StockManager:
                 
                 # Load symbols and mappings if available in new format
                 if "STOCK_SYMBOLS" in data:
-                    cls.stock_symbols = data["STOCK_SYMBOLS"]
+                    # Make sure stock_symbols is a list
+                    if isinstance(data["STOCK_SYMBOLS"], list):
+                        cls.stock_symbols = data["STOCK_SYMBOLS"]
+                    else:
+                        # Convert from dict or other type to list
+                        logger.warning("Converting STOCK_SYMBOLS from non-list to list")
+                        cls.stock_symbols = list(data["STOCK_SYMBOLS"].keys() if isinstance(data["STOCK_SYMBOLS"], dict) 
+                                            else data["STOCK_SYMBOLS"])
                 else:
                     # Fallback to config for backward compatibility
                     cls.stock_symbols = list(config.STOCK_SYMBOLS)
@@ -350,6 +357,11 @@ class StockManager:
     @classmethod
     async def add_stock(cls, symbol, user_id) -> bool:
         try:
+            # Ensure stock_symbols is a list
+            if not isinstance(cls.stock_symbols, list):
+                cls.stock_symbols = list(cls.stock_symbols.keys()) if isinstance(cls.stock_symbols, dict) else []
+                logger.warning(f"Converted stock_symbols to list: {cls.stock_symbols}")
+            
             # Add to internal data structures
             cls.stock_symbols.append(symbol)
             cls.user_to_ticker[str(user_id)] = symbol

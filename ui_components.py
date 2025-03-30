@@ -329,7 +329,7 @@ class HelpView(View):
     def get_embed(self):
         """Get the help embed"""
         embed = discord.Embed(
-            title="Stock Exchange Commands",
+            title=f"{config.NAME} Exchange Commands",
             color=config.COLOR_INFO
         )
         
@@ -338,8 +338,9 @@ class HelpView(View):
             name="💰 Economy Commands",
             value=(
                 f"`!balance` or `!bal` - Check your ${config.UOM} balance\n"
-                "`!daily` - Claim daily reward\n"
-                f"`!gift <@user> <amount>` - Gift ${config.UOM} to another user"
+                "`!daily` - Claim daily reward and dividends\n"
+                f"`!gift <@user> <amount>` - Gift ${config.UOM} to another user\n"
+                f"`!dividends` or `!div` - Check your dividend status"
             ),
             inline=False
         )
@@ -349,8 +350,9 @@ class HelpView(View):
             name="📈 Stock Market Commands",
             value=(
                 "`!portfolio` or `!port` - View your stock portfolio\n"
-                "`!rebrand <symbol>` or `rename <symbol>` -  Rebrand your stock"
-                f"`!createstock <symbol>` or `!ipo <symbol>` - Create your own stock (costs ${config.IPO_COST} {config.UOM})"
+                f"`!rebrand <symbol>` or `!rename <symbol>` - Rebrand your stock (costs ${config.REBRAND_FEE} {config.UOM})\n"
+                f"`!createstock <symbol>` or `!ipo <symbol>` - Create your own stock (costs ${config.IPO_COST} {config.UOM})\n"
+                "`!decayrisk` or `!stockrisk` - Check which stocks are at risk of decay"
             ),
             inline=False
         )
@@ -370,6 +372,28 @@ class HelpView(View):
         embed.add_field(
             name="📊 Leaderboards",
             value=f"Check out <#{channel_id}> for live leaderboards!",
+            inline=False
+        )
+        
+        # Add dividend info
+        embed.add_field(
+            name="💰 Dividend System",
+            value=(
+                f"• Top {config.TOP_SHAREHOLDERS_COUNT} shareholders in each stock receive daily dividends\n"
+                f"• Stock creators earn dividends based on shares held by others\n"
+                f"• Use `!dividends` to check your dividend status"
+            ),
+            inline=False
+        )
+        
+        # Add decay info
+        embed.add_field(
+            name="📉 Stock Decay System",
+            value=(
+                f"• When there are more than {config.STOCK_DECAY_THRESHOLD} stocks, the least popular ones decay\n"
+                f"• Decaying stocks lose value over time.\n"
+                f"• Use `!decayrisk` to check which stocks are at risk"
+            ),
             inline=False
         )
         

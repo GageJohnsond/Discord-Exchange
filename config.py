@@ -11,6 +11,9 @@ load_dotenv()
 # Bot token from environment variables
 TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 
+#Exchange Name
+NAME = "Stock" #Name of the Exchange eg: The <NAME> Exchange
+
 #Admin User ID's
 ADMIN_USER_IDS = [126535729156194304]
 
@@ -27,6 +30,20 @@ DAILY_REWARD_MIN = 15
 DAILY_REWARD_MAX = 100
 SELLING_FEE = 7  # Fee to sell stocks
 REBRAND_FEE = 500 #Fee to rename stock
+
+# Dividend settings
+TOP_SHAREHOLDERS_COUNT = 3  # Number of top shareholders to reward
+CREATOR_DIVIDEND_PERCENT = 2  # Percentage of stock price per shareholder
+TOP_SHAREHOLDER_DIVIDENDS = {
+    0: 15,  # 15% of stock price to top shareholder
+    1: 10,  # 10% of stock price to second place
+    2: 5  # 5% of stock price to third place
+}
+
+# Stock decay settings
+STOCK_DECAY_THRESHOLD = 6  # Maximum number of stocks before decay starts
+STOCK_DECAY_PERCENT = 3.0   # Percentage to reduce price by on each update
+STOCK_BANKRUPTCY_THRESHOLD = 5.0  # Price threshold for bankruptcy warning
 
 # Message rewards
 MESSAGE_REWARD_MIN = 1
