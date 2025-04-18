@@ -661,7 +661,7 @@ async def admin_market_condition(ctx, condition=None, bot=None):
     if ctx.author.id not in config.ADMIN_USER_IDS:
         return "❌ You don't have permission to use admin commands."
 
-    valid_conditions = ["bear", "bull", "volatile", "stable", "crash"]
+    valid_conditions = ["bear", "bull", "volatile", "stable", "crash", "superbull"]
     
     # If no condition specified, just report current status
     if not condition:
@@ -695,24 +695,29 @@ async def admin_market_condition(ctx, condition=None, bot=None):
     condition_properties = {
         "bear": {
             "min_change": random.uniform(-5, -1),
-            "max_change": random.uniform(-1, 2),
+            "max_change": random.uniform(0, 2),
         },
         "bull": {
-            "min_change": random.uniform(-1, 1),
-            "max_change": random.uniform(2, 5),
+            "min_change": random.uniform(-.5, 1),
+            "max_change": random.uniform(2, 5.5),
         },
         "volatile": {
-            "min_change": random.uniform(-7, -3),
-            "max_change": random.uniform(3, 7),
+            "min_change": random.uniform(-8, -3),
+            "max_change": random.uniform(3, 8),
         },
         "stable": {
-            "min_change": random.uniform(-3, -1),
-            "max_change": random.uniform(1, 3),
+            "min_change": random.uniform(-4, -1),
+            "max_change": random.uniform(1, 4),
         },
         "crash": {
-            "min_change": random.uniform(-15, -8),
-            "max_change": random.uniform(-8, -3),
+            "min_change": random.uniform(-12, -8),
+            "max_change": random.uniform(-8, -4),
+        },
+        "superbull":{
+            "min_change": random.uniform(0, 1),
+            "max_change": random.uniform(4, 8),
         }
+        
     }
     
     # Update market condition

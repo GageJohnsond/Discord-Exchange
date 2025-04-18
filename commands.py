@@ -55,9 +55,7 @@ def daily(ctx):
     
     # Generate random daily reward
     reward = round(random.uniform(config.DAILY_REWARD_MIN, config.DAILY_REWARD_MAX), 2)
-    data[user_id]["balance"] += reward
-    data[user_id]["last_daily"] = today
-    
+
     # Process dividends
     from dividends import DividendManager
     dividend_results = DividendManager.process_daily_dividends()
@@ -66,7 +64,11 @@ def daily(ctx):
     shareholder_dividend = dividend_results["top_shareholders"].get(user_id, 0)
     creator_dividend = dividend_results["creators"].get(user_id, 0)
     total_dividend = shareholder_dividend + creator_dividend
-    
+
+    total_reward = total_dividend + reward
+
+    data[user_id]["balance"] += total_reward
+    data[user_id]["last_daily"] = today
     DataManager.save_data(config.USER_DATA_FILE, data)
     
     # Create response embed
