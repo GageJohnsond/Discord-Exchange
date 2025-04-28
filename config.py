@@ -83,6 +83,9 @@ COLOR_WARNING = 0xFFD700  # Gold
 COLOR_SPECIAL = 0xE91E63  # Pink
 COLOR_DISCORD = 0x7289DA  # Discord Blurple
 
+# Bot Version
+BOT_VERSION = "1.0.1"
+
 
 # Default user data
 DEFAULT_USER_DATA = {

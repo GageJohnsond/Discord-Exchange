@@ -396,5 +396,14 @@ class HelpView(View):
             ),
             inline=False
         )
+
+        # Add version info
+        embed.add_field(
+            name="🆚 Bot Version",
+            value=(
+                f"• Current version of bot: {config.BOT_VERSION}\n"
+            ),
+            inline=False
+        )
         
         return embed

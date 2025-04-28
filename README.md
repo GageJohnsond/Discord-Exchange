@@ -1,5 +1,8 @@
 # Discord Exchange Bot
 
+Version: 1.0.1 
+# KEEP VERSION UP TO DATE IN BOTH README.MD AND CONFIG.PY
+
 A Discord bot that simulates a local Stock Exchange, allowing users to earn virtual currency, trade eachothers stocks, and promotes interaction with the discord.
 
 ## Features
