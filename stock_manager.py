@@ -482,7 +482,7 @@ class StockManager:
         sale_price = base_price - fee
         
         # Decrease stock price after sale (market impact) (@BobBeasta) The full random decrease amount
-        change = random_deacrease
+        change = random_decrease
         new_price = cls.stock_prices[symbol] - change
         new_price = round(new_price, 2)
         
