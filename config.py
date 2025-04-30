@@ -28,7 +28,7 @@ UOM="USD"
 DAILY_CAP = 60
 DAILY_REWARD_MIN = 15
 DAILY_REWARD_MAX = 100
-SELLING_FEE = 7  # Fee to sell stocks
+SELLING_FEE = 0  # Fee to sell stocks (@BobBeasta) Changed selling fee to $0
 REBRAND_FEE = 500 #Fee to rename stock
 
 # Dividend settings

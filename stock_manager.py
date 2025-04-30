@@ -392,8 +392,11 @@ class StockManager:
         Returns:
             The purchase price
         """
-        # Get current price
-        price = cls.stock_prices[symbol]
+        # (@BobBeasta) Establish the random stock increase amount
+        random_increase = random.uniform(config.STOCK_BUY_MIN_CHANGE, config.STOCK_BUY_MAX_CHANGE)
+        
+        # Get current price + (@BobBeasta) half of additional
+        price = cls.stock_prices[symbol] + (random_increase / 2)
         
         # Record purchase date in user data
         from data_manager import DataManager
@@ -418,8 +421,8 @@ class StockManager:
             # Save the updated data
             DataManager.save_data(config.USER_DATA_FILE, data)
         
-        # Increase stock price after purchase (market impact)
-        change = random.uniform(config.STOCK_BUY_MIN_CHANGE, config.STOCK_BUY_MAX_CHANGE)
+        # Increase stock price after purchase (market impact) (@BobBeasta) The full random increase amount
+        change = random_increase
         new_price = cls.stock_prices[symbol] + change
         cls.stock_prices[symbol] = round(new_price, 2)
         cls.price_history[symbol].append(round(new_price, 2))
@@ -432,7 +435,7 @@ class StockManager:
     async def sell_stock(cls, symbol: str, user_id: str, bot=None) -> Tuple[float, bool, bool]:
         """
         Process a stock sale and return the sale price.
-        Applies selling fee only if stock was purchased on the same day.
+        Applies selling fee only if stock was purchased on the same day. (@BobBeasta) Made the fee equal to $0
         Also updates the stock price to reflect the sale.
         Handles bankruptcy if the price drops to 0 or below.
         
@@ -444,8 +447,11 @@ class StockManager:
         Returns:
             Tuple of (sale price, was same day sale, was bankruptcy triggered)
         """
-        # Get current price 
-        base_price = cls.stock_prices[symbol]
+        # (@BobBeasta) Establish the random stock decrease amount
+        random_decrease = random.uniform(config.STOCK_SELL_MIN_CHANGE, config.STOCK_SELL_MAX_CHANGE)
+        
+        # Get current price - (@BobBeasta) half of additional
+        base_price = cls.stock_prices[symbol] - (random_decrease / 2)
         same_day_sale = False
         fee = 0
         bankruptcy_triggered = False
@@ -475,8 +481,8 @@ class StockManager:
         # Calculate sale price after fee (if applicable)
         sale_price = base_price - fee
         
-        # Decrease stock price after sale (market impact)
-        change = random.uniform(config.STOCK_SELL_MIN_CHANGE, config.STOCK_SELL_MAX_CHANGE)
+        # Decrease stock price after sale (market impact) (@BobBeasta) The full random decrease amount
+        change = random_decrease
         new_price = cls.stock_prices[symbol] - change
         new_price = round(new_price, 2)
         
